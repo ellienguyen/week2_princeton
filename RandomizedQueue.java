@@ -1,6 +1,6 @@
 /******************************************************************************
- *  Compilation:  javac ResizingArrayStack.java
- *  Execution:    java ResizingArrayStack < input.txt
+ *  Compilation:  javac RandomizedQueue.java
+ *  Execution:    java RandomizedQueue < input.txt
  *  Dependencies: StdIn.java StdOut.java
  *  Data files:   http://algs4.cs.princeton.edu/13stacks/tobe.txt
  *
@@ -9,18 +9,19 @@
  *  % more tobe.txt
  *  to be or not to - be - - that - - - is
  *
- *  % java ResizingArrayStack < tobe.txt
+ *  % java RandomizedQueue < tobe.txt
  *  to be not that or be (2 left on stack)
  *
  ******************************************************************************/
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import edu.princeton.cs.algs4.StdIn;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
 
 /**
- *  The {@code ResizingArrayStack} class represents a last-in-first-out (LIFO) stack
+ *  The {@code RandomizedQueue} class represents a last-in-first-out (LIFO) stack
  *  of generic items.
  *  It supports the usual <em>push</em> and <em>pop</em> operations, along with methods
  *  for peeking at the top item, testing if the stack is empty, and iterating through
@@ -39,7 +40,7 @@ import edu.princeton.cs.algs4.StdOut;
  *  @author Robert Sedgewick
  *  @author Kevin Wayne
  */
-public class ResizingArrayStack<Item> implements Iterable<Item> {
+public class RandomizedQueue<Item> implements Iterable<Item> {
     private Item[] a;         // array of items
     private int n;            // number of elements on stack
 
@@ -47,7 +48,7 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
     /**
      * Initializes an empty stack.
      */
-    public ResizingArrayStack() {
+    public RandomizedQueue() {
         a = (Item[]) new Object[2];
         n = 0;
     }
@@ -90,7 +91,10 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
      * Adds the item to this stack.
      * @param item the item to add
      */
-    public void push(Item item) {
+    public void enqueue(Item item) {
+        if (item == null) {
+            throw new java.lang.NullPointerException("Adding null");
+        }
         if (n == a.length) resize(2*a.length);    // double size of array if necessary
         a[n++] = item;                            // add item
     }
@@ -100,11 +104,19 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
      * @return the item most recently added
      * @throws java.util.NoSuchElementException if this stack is empty
      */
-    public Item pop() {
+    public Item dequeue() {
         if (isEmpty()) throw new NoSuchElementException("Stack underflow");
-        Item item = a[n-1];
-        a[n-1] = null;                              // to avoid loitering
-        n--;
+        Item item;
+        if (n == 1) {
+            item = a[0];
+            n--;
+        } else {
+            int randomIndex = StdRandom.uniform(0,n);
+            item = a[randomIndex];
+            a[randomIndex] = a[n-1];
+            a[n - 1] = null;
+            n--;
+        }
         // shrink size of array if necessary
         if (n > 0 && n == a.length/4) resize(a.length/2);
         return item;
@@ -116,9 +128,9 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
      * @return the item most recently added to this stack
      * @throws java.util.NoSuchElementException if this stack is empty
      */
-    public Item peek() {
+    public Item sample() {
         if (isEmpty()) throw new NoSuchElementException("Stack underflow");
-        return a[n-1];
+        return a[StdRandom.uniform(0,n)];
     }
 
     /**
@@ -126,19 +138,22 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
      * @return an iterator to this stack that iterates through the items in LIFO order.
      */
     public Iterator<Item> iterator() {
-        return new ReverseArrayIterator();
+        return new RandomizedQueueIterator();
     }
 
     // an iterator, doesn't implement remove() since it's optional
-    private class ReverseArrayIterator implements Iterator<Item> {
+    private class RandomizedQueueIterator implements Iterator<Item> {
         private int i;
+        private Item[] array;
 
-        public ReverseArrayIterator() {
-            i = n-1;
+        public RandomizedQueueIterator() {
+            array = Arrays.copyOf(a, n);
+            StdRandom.shuffle(array);
+            i = 0;
         }
 
         public boolean hasNext() {
-            return i >= 0;
+            return i < n;
         }
 
         public void remove() {
@@ -147,7 +162,7 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
 
         public Item next() {
             if (!hasNext()) throw new NoSuchElementException();
-            return a[i--];
+            return array[i++];
         }
     }
 
@@ -158,12 +173,10 @@ public class ResizingArrayStack<Item> implements Iterable<Item> {
      * @param args the command-line arguments
      */
     public static void main(String[] args) {
-        ResizingArrayStack<String> stack = new ResizingArrayStack<String>();
-        while (!StdIn.isEmpty()) {
-            String item = StdIn.readString();
-            if (!item.equals("-")) stack.push(item);
-            else if (!stack.isEmpty()) StdOut.print(stack.pop() + " ");
+        RandomizedQueue<String> strings = new RandomizedQueue<String>();
+        strings.enqueue("One");
+        for(String e: strings) {
+            StdOut.print(e);
         }
-        StdOut.println("(" + stack.size() + " left on stack)");
     }
 }
