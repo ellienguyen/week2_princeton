@@ -44,11 +44,11 @@ public class Deque<Item> implements Iterable<Item> {
     private int n;          // size of the stack
     private Node first;     // top of stack
     private Node last;     // top of stack
-    private Node prevLast;
     // helper linked list class
     private class Node {
         private Item item;
         private Node next;
+        private Node prev;
     }
 
     /**
@@ -57,7 +57,6 @@ public class Deque<Item> implements Iterable<Item> {
     public Deque() {
         first = null;
         last = null;
-        prevLast = null;
         n = 0;
         assert check();
     }
@@ -90,11 +89,11 @@ public class Deque<Item> implements Iterable<Item> {
         first = new Node();
         first.item = item;
         first.next = oldfirst;
+        first.prev = null;
         if (n == 0) {
             last = first;
-        } else if (n == 1) {
-            last = oldfirst;
-            prevLast = first;
+        } else {
+            oldfirst.prev = first;
         }
         n++;
         assert check();
@@ -111,13 +110,10 @@ public class Deque<Item> implements Iterable<Item> {
         last.next = null;
         if (n == 0) {
             first = last;
-        } else if (n == 1) {
-            first = oldLast;
-            prevLast = first;
         } else {
-            prevLast = oldLast;
+            oldLast.next = last;
+            last.prev = oldLast;
         }
-        oldLast.next = last;
         n++;
         assert check();
     }
@@ -133,9 +129,8 @@ public class Deque<Item> implements Iterable<Item> {
         first = first.next;          // delete first node
         if (n == 1) {
             last = null;
-            prevLast = null;
-        } else if (n == 2) {
-            prevLast = null;
+        } else {
+            first.prev = null;
         }
         n--;
         assert check();
@@ -149,16 +144,12 @@ public class Deque<Item> implements Iterable<Item> {
      */
     public Item removeLast() {
         if (isEmpty()) throw new NoSuchElementException("Deque underflow");
-        Item item = last.item;        // save item to return
-        if (prevLast == null || n == 1) {
+        Item item = last.item;
+        last = last.prev;
+        if (n == 1) {
             first = null;
-            last = null;
-        } else if (n == 2) {
-            prevLast = null;
-            first.next = null;
-            last = first;
         } else {
-            prevLast.next = null;
+            last.next = null;
         }
         n--;
         assert check();
@@ -220,6 +211,7 @@ public class Deque<Item> implements Iterable<Item> {
      * @param args the command-line arguments
      */
     public static void main(String[] args) {
+
 
     }
 }
